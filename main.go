@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/gin-gonic/gin"
 	logger_v2 "gitlab.com/milan44/logger-v2"
@@ -33,6 +34,8 @@ func main() {
 	InfoPlain("Host: ", "http://localhost")
 	InfoPlain("Root: ", pwd)
 	fmt.Println()
+
+	exec.Command("rundll32", "url.dll,FileProtocolHandler", "http://localhost").Start()
 
 	must(r.Run(":80"))
 }
