@@ -1,3 +1,5 @@
 @echo off
 
-go build -o localhost.exe
+if not exist "bin" mkdir bin
+
+go build -o bin/localhost.exe
