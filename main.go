@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 
+	"github.com/coalaura/logger"
 	"github.com/gin-gonic/gin"
-	logger_v2 "gitlab.com/milan44/logger-v2"
 )
 
 var (
-	log = logger_v2.NewColored()
+	log = logger.New()
 )
 
 func main() {
@@ -37,7 +38,18 @@ func main() {
 
 	exec.Command("rundll32", "url.dll,FileProtocolHandler", "http://localhost").Start()
 
-	must(r.Run(":80"))
+	must(r.Run(port()))
+}
+
+func port() string {
+	if len(os.Args) > 1 {
+		num, err := strconv.ParseInt(os.Args[1], 10, 64)
+		must(err)
+
+		return fmt.Sprintf(":%d", num)
+	}
+
+	return ":80"
 }
 
 func must(err error) {
