@@ -1,8 +1,9 @@
 module go-server
 
-go 1.21.1
+go 1.23.1
 
 require (
+	github.com/coalaura/arguments v1.4.1
 	github.com/coalaura/logger v1.0.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gookit/color v1.5.4

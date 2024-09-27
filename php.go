@@ -3,12 +3,15 @@ package main
 import (
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 )
 
 type PHPServer struct {
+	laravel bool
 	process *exec.Cmd
 	proxy   *httputil.ReverseProxy
 }
@@ -24,21 +27,38 @@ func HasPHPSupport() bool {
 	return err == nil && php != ""
 }
 
-func NewPHPServer() (*PHPServer, error) {
-	cmd := exec.Command("php", "-S", "localhost:8989")
+func IsLaravelServer() bool {
+	return php != nil && php.laravel
+}
+
+func IsPHPServer() bool {
+	return php != nil && !php.laravel
+}
+
+func NewPHPServer(pwd string) (*PHPServer, error) {
+	var cmd *exec.Cmd
+
+	artisan := filepath.Join(pwd, "artisan")
+
+	if _, err := os.Stat(artisan); os.IsNotExist(err) {
+		cmd = exec.Command("php", "-S", "localhost:8989", "-t", pwd)
+	} else {
+		cmd = exec.Command("php", artisan, "serve", "--port=8989")
+	}
 
 	err := cmd.Start()
 	if err != nil {
 		return nil, err
 	}
 
-	uri, _ := url.Parse("http://localhost:8989") // Change this URL to your destination
+	uri, _ := url.Parse("http://localhost:8989")
 
 	proxy := httputil.NewSingleHostReverseProxy(uri)
 
 	return &PHPServer{
 		process: cmd,
 		proxy:   proxy,
+		laravel: artisan != "",
 	}, nil
 }
 
@@ -54,23 +74,15 @@ func InitializePHP(r *gin.Engine) {
 		return
 	}
 
-	s, err := NewPHPServer()
-	must(err)
-
-	php = s
-
 	r.Use(func(c *gin.Context) {
-		mime := GetMimeType(c)
+		php.Handle(c)
 
-		if mime == "php" {
-			php.Handle(c)
-			c.Abort()
-
-			return
-		}
-
-		c.Next()
+		c.Abort()
 	})
 
-	InfoGreen("PHP:  ", "enabled")
+	if php.laravel {
+		InfoGreen("PHP:  ", "enabled (laravel)")
+	} else {
+		InfoGreen("PHP:  ", "enabled (plain)")
+	}
 }

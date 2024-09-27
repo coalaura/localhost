@@ -3,10 +3,21 @@ package main
 import (
 	"strings"
 
+	"github.com/coalaura/arguments"
 	"github.com/gin-gonic/gin"
 )
 
 func EnsureIndex(pwd string) gin.HandlerFunc {
+	var def string
+
+	if IsPHPServer() {
+		def = "index.php"
+	} else if !IsLaravelServer() {
+		def = "index.html"
+	}
+
+	index := arguments.String("i", "index", def)
+
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
 
@@ -16,33 +27,10 @@ func EnsureIndex(pwd string) gin.HandlerFunc {
 			return
 		}
 
-		_, ok := GetLocalFile(pwd, "index.html")
-		if ok {
-			c.Request.URL.Path = "/index.html"
-
-			c.Next()
-
-			return
+		if index != "" {
+			c.Request.URL.Path += index
 		}
 
-		_, ok = GetLocalFile(pwd, "index.htm")
-		if ok {
-			c.Request.URL.Path = "/index.htm"
-
-			c.Next()
-
-			return
-		}
-
-		_, ok = GetLocalFile(pwd, "index.php")
-		if ok {
-			c.Request.URL.Path = "/index.php"
-
-			c.Next()
-
-			return
-		}
-
-		HandleStatus(c, 404)
+		c.Next()
 	}
 }

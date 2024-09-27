@@ -4,6 +4,8 @@ github.com/bytedance/sonic v1.9.1/go.mod h1:i736AoUSYt75HyZLoJW9ERYxcy6eaN6h4BZX
 github.com/chenzhuoyu/base64x v0.0.0-20211019084208-fb5309c8db06/go.mod h1:DH46F32mSOjUmXrMHnKwZdA8wcEefY7UVqBKYGjpdQY=
 github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 h1:qSGYFH7+jGhDF8vLC+iwCD4WpbV1EBDSzWkJODFLams=
 github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311/go.mod h1:b583jCggY9gE99b6G5LEC39OIiVsWj+R97kbl5odCEk=
+github.com/coalaura/arguments v1.4.1 h1:ytF8PyQimIIK+ZHNF0DiCji02+8ZjTW6O5lAQMbZXPY=
+github.com/coalaura/arguments v1.4.1/go.mod h1:zDouRoTD/s8bwinfmfrOf9PE4qxwxyQ5Hoz8Ctd8cBk=
 github.com/coalaura/logger v1.0.0 h1:+rwX/ib1/06LSQaqQxpVk3qen6trnWS+0GMJDuXx3gY=
 github.com/coalaura/logger v1.0.0/go.mod h1:7pxHPzQqS6jt2NhbUbBT27XYHvtcTrFHWtkGN4uQPjA=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
