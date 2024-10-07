@@ -8,7 +8,6 @@ import (
 
 	"github.com/coalaura/arguments"
 	"github.com/coalaura/logger"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -63,7 +62,7 @@ func main() {
 
 	r.Use(gin.Recovery())
 	r.Use(log.Middleware())
-	r.Use(cors.Default())
+	r.Use(cors())
 	r.Use(EnsureIndex(dir))
 
 	// Handle php files
@@ -74,6 +73,7 @@ func main() {
 
 	InfoPlain("Host: ", host)
 	InfoPlain("Root: ", dir)
+	InfoPlain("CORS: ", "allow-all")
 
 	if cert != "" && key != "" {
 		InfoPlain("TLS:  ", "enabled")
@@ -110,5 +110,13 @@ func main() {
 func must(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+func cors() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+
+		c.Next()
 	}
 }
