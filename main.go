@@ -8,6 +8,7 @@ import (
 
 	"github.com/coalaura/arguments"
 	"github.com/coalaura/logger"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -62,6 +63,7 @@ func main() {
 
 	r.Use(gin.Recovery())
 	r.Use(log.Middleware())
+	r.Use(cors.Default())
 	r.Use(EnsureIndex(dir))
 
 	// Handle php files
