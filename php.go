@@ -1,11 +1,16 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
+	"io"
+	"net"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,22 +41,56 @@ func IsPHPServer() bool {
 }
 
 func NewPHPServer(pwd string) (*PHPServer, error) {
+	port := FindFreePort()
+
 	var cmd *exec.Cmd
 
 	artisan := filepath.Join(pwd, "artisan")
 
 	if _, err := os.Stat(artisan); os.IsNotExist(err) {
-		cmd = exec.Command("php", "-S", "localhost:8989", "-t", pwd)
+		cmd = exec.Command("php", "-S", "localhost:"+port, "-t", pwd)
 	} else {
-		cmd = exec.Command("php", artisan, "serve", "--port=8989")
+		cmd = exec.Command("php", artisan, "serve", "--port="+port)
 	}
 
-	err := cmd.Start()
+	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
+
+	reader, writer := io.Pipe()
+
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
 	}
 
-	uri, _ := url.Parse("http://localhost:8989")
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	multiWriter := io.MultiWriter(writer)
+
+	go io.Copy(multiWriter, stdout)
+	go io.Copy(multiWriter, stderr)
+
+	go func() {
+		defer writer.Close()
+		defer reader.Close()
+
+		scanner := bufio.NewScanner(reader)
+
+		for scanner.Scan() {
+			text := strings.TrimRight(scanner.Text(), "\r\n")
+
+			PHPOut(text)
+		}
+	}()
+
+	err = cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	uri, _ := url.Parse("http://localhost:" + port)
 
 	proxy := httputil.NewSingleHostReverseProxy(uri)
 
@@ -85,4 +124,17 @@ func InitializePHP(r *gin.Engine) {
 	} else {
 		InfoGreen("PHP:  ", "enabled (plain)")
 	}
+}
+
+func FindFreePort() string {
+	listener, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		panic(err)
+	}
+
+	defer listener.Close()
+
+	port := listener.Addr().(*net.TCPAddr).Port
+
+	return fmt.Sprint(port)
 }

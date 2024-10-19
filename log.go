@@ -32,3 +32,12 @@ func InfoRed(msg, red string) {
 
 	_, _ = color.Reset()
 }
+
+func PHPOut(msg string) {
+	purple := color.RenderCode("38;5;105", "[PHP]")
+
+	color.Fprint(os.Stdout, purple)
+	color.Fprintln(os.Stdout, " "+msg)
+
+	_, _ = color.Reset()
+}
