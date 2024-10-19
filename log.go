@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/gookit/color"
@@ -33,11 +34,12 @@ func InfoRed(msg, red string) {
 	_, _ = color.Reset()
 }
 
-func PHPOut(msg string) {
-	purple := color.RenderCode("38;5;105", "[PHP]")
+func ErrorF(msg string, data ...interface{}) {
+	red := color.RenderCode("38;5;124", "Error: ")
+	bright := color.RenderCode("38;5;210", fmt.Sprintf(msg, data...))
 
-	color.Fprint(os.Stdout, purple)
-	color.Fprintln(os.Stdout, " "+msg)
+	color.Fprint(os.Stdout, red)
+	color.Fprintln(os.Stdout, bright)
 
 	_, _ = color.Reset()
 }

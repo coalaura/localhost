@@ -1,21 +1,20 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"fmt"
-	"io"
 	"net"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
 type PHPServer struct {
+	dead    *bool
 	laravel bool
 	process *exec.Cmd
 	proxy   *httputil.ReverseProxy
@@ -55,46 +54,34 @@ func NewPHPServer(pwd string) (*PHPServer, error) {
 
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
 
-	reader, writer := io.Pipe()
+	var buffer bytes.Buffer
 
-	stdout, err := cmd.StdoutPipe()
+	cmd.Stdout = &buffer
+	cmd.Stderr = &buffer
+
+	err := cmd.Start()
 	if err != nil {
 		return nil, err
 	}
 
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return nil, err
-	}
-
-	multiWriter := io.MultiWriter(writer)
-
-	go io.Copy(multiWriter, stdout)
-	go io.Copy(multiWriter, stderr)
+	var dead bool
 
 	go func() {
-		defer writer.Close()
-		defer reader.Close()
-
-		scanner := bufio.NewScanner(reader)
-
-		for scanner.Scan() {
-			text := strings.TrimRight(scanner.Text(), "\r\n")
-
-			PHPOut(text)
+		if err := cmd.Wait(); err != nil {
+			ErrorF("PHP server exited with error: %s", err)
 		}
-	}()
 
-	err = cmd.Start()
-	if err != nil {
-		return nil, err
-	}
+		dead = true
+
+		fmt.Println(buffer.String())
+	}()
 
 	uri, _ := url.Parse("http://localhost:" + port)
 
 	proxy := httputil.NewSingleHostReverseProxy(uri)
 
 	return &PHPServer{
+		dead:    &dead,
 		process: cmd,
 		proxy:   proxy,
 		laravel: artisan != "",
@@ -103,6 +90,12 @@ func NewPHPServer(pwd string) (*PHPServer, error) {
 
 // Handle forwards the request to the PHP server and returns the response
 func (p *PHPServer) Handle(c *gin.Context) {
+	if *p.dead {
+		c.String(504, "PHP server is dead")
+
+		return
+	}
+
 	p.proxy.ServeHTTP(c.Writer, c.Request)
 }
 
