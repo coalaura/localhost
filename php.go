@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"net"
 	"net/http/httputil"
@@ -54,10 +53,8 @@ func NewPHPServer(pwd string) (*PHPServer, error) {
 
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
 
-	var buffer bytes.Buffer
-
-	cmd.Stdout = &buffer
-	cmd.Stderr = &buffer
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stdout
 
 	err := cmd.Start()
 	if err != nil {
@@ -72,8 +69,6 @@ func NewPHPServer(pwd string) (*PHPServer, error) {
 		}
 
 		dead = true
-
-		fmt.Println(buffer.String())
 	}()
 
 	uri, _ := url.Parse("http://localhost:" + port)
