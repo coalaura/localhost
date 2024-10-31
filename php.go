@@ -51,12 +51,17 @@ func NewPHPServer(pwd string) (*PHPServer, error) {
 		cmd = exec.Command("php", artisan, "serve", "--port="+port)
 	}
 
+	out, err := os.OpenFile("php.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return nil, err
+	}
+
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stdout
+	cmd.Stdout = out
+	cmd.Stderr = out
 
-	err := cmd.Start()
+	err = cmd.Start()
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +72,8 @@ func NewPHPServer(pwd string) (*PHPServer, error) {
 		if err := cmd.Wait(); err != nil {
 			ErrorF("PHP server exited with error: %s", err)
 		}
+
+		out.Close()
 
 		dead = true
 	}()
