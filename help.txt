@@ -8,4 +8,5 @@ Options:
   -o, --open               Automatically open the server in the default web browser.
   -r, --redirect           Redirect all HTTP requests on port 80 to HTTPS (requires HTTPS).
   -i, --index <file>       Specify the index file to serve. (Ignored if Laravel is detected)
+  -v, --verbose            Enable verbose logging (writes to php.log).
   -h, --help               Show this help message and exit.

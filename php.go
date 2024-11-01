@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/coalaura/arguments"
 	"github.com/gin-gonic/gin"
 )
 
@@ -51,15 +52,22 @@ func NewPHPServer(pwd string) (*PHPServer, error) {
 		cmd = exec.Command("php", artisan, "serve", "--port="+port)
 	}
 
-	out, err := os.OpenFile("php.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		return nil, err
+	var (
+		out *os.File
+		err error
+	)
+
+	if arguments.Bool("v", "verbose", false) {
+		out, err = os.OpenFile("php.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			return nil, err
+		}
+
+		cmd.Stdout = out
+		cmd.Stderr = out
 	}
 
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
-
-	cmd.Stdout = out
-	cmd.Stderr = out
 
 	err = cmd.Start()
 	if err != nil {
@@ -73,7 +81,9 @@ func NewPHPServer(pwd string) (*PHPServer, error) {
 			ErrorF("PHP server exited with error: %s", err)
 		}
 
-		out.Close()
+		if out != nil {
+			out.Close()
+		}
 
 		dead = true
 	}()
