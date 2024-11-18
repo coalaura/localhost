@@ -94,6 +94,8 @@ func main() {
 				http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 					target := "https://" + r.Host + r.URL.RequestURI()
 
+					w.Header().Set("Access-Control-Allow-Origin", "*")
+
 					http.Redirect(w, r, target, http.StatusTemporaryRedirect)
 				})
 
