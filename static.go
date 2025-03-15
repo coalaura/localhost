@@ -11,6 +11,12 @@ func HandleBasic(pwd string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
 
+		if options.LiveReload && path == "/_live_local" {
+			HandleLive(c)
+
+			return
+		}
+
 		file, ok := GetLocalFile(pwd, path)
 		if !ok {
 			HandleStatus(c, 404)
@@ -25,7 +31,13 @@ func HandleBasic(pwd string) gin.HandlerFunc {
 			return
 		}
 
-		c.Data(200, GetMimeType(c), content)
+		mime := GetMimeType(c)
+
+		if options.LiveReload && mime == "text/html" {
+			content = InjectLive(content)
+		}
+
+		c.Data(200, mime, content)
 	}
 }
 

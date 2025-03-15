@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
-	"github.com/coalaura/arguments"
 	"github.com/gin-gonic/gin"
 )
 
@@ -42,22 +43,26 @@ func IsPHPServer() bool {
 func NewPHPServer(pwd string) (*PHPServer, error) {
 	port := FindFreePort()
 
-	var cmd *exec.Cmd
-
 	artisan := filepath.Join(pwd, "artisan")
 
-	if _, err := os.Stat(artisan); os.IsNotExist(err) {
-		cmd = exec.Command("php", "-S", "localhost:"+port, "-t", pwd)
+	if _, err := os.Stat(artisan); !os.IsNotExist(err) {
+		pwd = filepath.Join(pwd, "public")
+
+		if _, err := os.Stat(pwd); !os.IsNotExist(err) {
+			return nil, fmt.Errorf("failed to find laravel public directory: %s", pwd)
+		}
 	} else {
-		cmd = exec.Command("php", artisan, "serve", "--port="+port)
+		artisan = ""
 	}
+
+	cmd := exec.Command("php", "-S", "localhost:"+port, "-t", pwd)
 
 	var (
 		out *os.File
 		err error
 	)
 
-	if arguments.Bool("v", "verbose", false) {
+	if options.Verbose {
 		out, err = os.OpenFile("php.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			return nil, err
@@ -111,11 +116,23 @@ func (p *PHPServer) Handle(c *gin.Context) {
 	p.proxy.ServeHTTP(c.Writer, c.Request)
 }
 
-func InitializePHP(r *gin.Engine) {
+func InitializePHP(r *gin.Engine, pwd string) error {
 	if !HasPHPSupport() {
+		InfoRed("PHP:  ", "unavailable")
+
+		return nil
+	}
+
+	hasPHP, err := HasPHPFiles(pwd)
+	if err == nil && !hasPHP {
 		InfoRed("PHP:  ", "disabled")
 
-		return
+		return nil
+	}
+
+	php, err = NewPHPServer(pwd)
+	if err != nil {
+		return err
 	}
 
 	r.Use(func(c *gin.Context) {
@@ -129,6 +146,8 @@ func InitializePHP(r *gin.Engine) {
 	} else {
 		InfoGreen("PHP:  ", "enabled (plain)")
 	}
+
+	return nil
 }
 
 func FindFreePort() string {
@@ -142,4 +161,32 @@ func FindFreePort() string {
 	port := listener.Addr().(*net.TCPAddr).Port
 
 	return fmt.Sprint(port)
+}
+
+func HasPHPFiles(dir string) (bool, error) {
+	var hasPHP bool
+
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if hasPHP {
+			return filepath.SkipDir
+		}
+
+		if !d.IsDir() && strings.HasSuffix(strings.ToLower(d.Name()), ".php") {
+			hasPHP = true
+
+			return filepath.SkipDir
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	return hasPHP, nil
 }

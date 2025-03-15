@@ -3,7 +3,6 @@ package main
 import (
 	"strings"
 
-	"github.com/coalaura/arguments"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,7 +15,7 @@ func EnsureIndex(pwd string) gin.HandlerFunc {
 		def = "index.html"
 	}
 
-	index := arguments.String("i", "index", def)
+	index := options.GetIndex(def)
 
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path

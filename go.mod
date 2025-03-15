@@ -1,15 +1,18 @@
 module go-server
 
-go 1.23.1
+go 1.24.1
 
 require (
-	github.com/coalaura/arguments v1.4.1
-	github.com/coalaura/logger v1.0.0
+	github.com/coalaura/arguments v1.5.2
+	github.com/coalaura/logger v1.4.2
+	github.com/coalaura/logger/gin v0.0.0-20250126172444-7ecf17aee6a3
+	github.com/fsnotify/fsnotify v1.8.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/gookit/color v1.5.4
+	github.com/gorilla/websocket v1.5.3
 )
 
-require github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
+require github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 
 require (
 	github.com/bytedance/sonic v1.12.3 // indirect
@@ -36,7 +39,7 @@ require (
 	golang.org/x/arch v0.11.0 // indirect
 	golang.org/x/crypto v0.28.0 // indirect
 	golang.org/x/net v0.30.0 // indirect
-	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect

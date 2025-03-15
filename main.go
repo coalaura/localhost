@@ -8,88 +8,79 @@ import (
 
 	"github.com/coalaura/arguments"
 	"github.com/coalaura/logger"
+	adapter "github.com/coalaura/logger/gin"
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	log = logger.New()
+	log     = logger.New()
+	options = Options{
+		Directory: ".",
+	}
 )
 
 func main() {
-	help()
+	arguments.Register("cert", 'c', &options.Certificate).WithHelp("Path to ssl certificate")
+	arguments.Register("directory", 'd', &options.Directory).WithHelp("Document root")
+	arguments.Register("index", 'i', &options.Index).WithHelp("Index file")
+	arguments.Register("key", 'k', &options.Key).WithHelp("Path to ssl key")
+	arguments.Register("live", 'l', &options.LiveReload).WithHelp("Automatically reload when files change (not with PHP)")
+	arguments.Register("open", 'o', &options.Open).WithHelp("Open in default browser once started")
+	arguments.Register("port", 'p', &options.Port).WithHelp("Web server port")
+	arguments.Register("redirect", 'r', &options.Redirect).WithHelp("Redirect http to https")
+	arguments.Register("verbose", 'v', &options.Verbose).WithHelp("Log php server output to php.log")
 
-	var (
-		err  error
-		port int
-		host string
-	)
+	arguments.RegisterHelp(true, "Show this help page.")
 
-	dir := arguments.String("d", "directory", "")
-	cert := arguments.String("c", "cert", "")
-	key := arguments.String("k", "key", "")
+	arguments.MustParse()
 
-	if cert != "" && key != "" {
-		port = arguments.IntN("p", "port", 443)
-
-		host = "https://localhost"
-
-		if port != 443 {
-			host += fmt.Sprintf(":%d", port)
-		}
-	} else {
-		port = arguments.IntN("p", "port", 80)
-
-		host = "http://localhost"
-
-		if port != 80 {
-			host += fmt.Sprintf(":%d", port)
-		}
-	}
-
-	if dir == "" {
-		dir = "."
-	}
-
-	dir, err = filepath.Abs(dir)
-	must(err)
-
-	php, err = NewPHPServer(dir)
-	must(err)
+	dir, err := filepath.Abs(options.Directory)
+	log.MustPanic(err)
 
 	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.New()
 
 	r.Use(gin.Recovery())
-	r.Use(log.Middleware())
+	r.Use(adapter.GinMiddleware(log))
 	r.Use(cors())
 	r.Use(EnsureIndex(dir))
 
 	// Handle php files
-	InitializePHP(r)
+	InitializePHP(r, dir)
 
 	// Handle static files
 	r.Use(HandleBasic(dir))
 
-	InfoPlain("Host: ", host)
+	// Handle live socket
+	if options.LiveReload {
+		err = InitializeLive(dir)
+		log.MustPanic(err)
+
+		InfoGreen("Live: ", "enabled")
+	} else {
+		InfoRed("Live: ", "disabled")
+	}
+
+	InfoPlain("Host: ", options.GetHost())
 	InfoPlain("Root: ", dir)
 	InfoPlain("CORS: ", "allow-all")
 
-	if cert != "" && key != "" {
-		InfoPlain("TLS:  ", "enabled")
+	if options.HasSSL() {
+		InfoGreen("TLS:  ", "enabled")
 	} else {
-		InfoPlain("TLS:  ", "disabled")
+		InfoRed("TLS:  ", "disabled")
 	}
 
 	fmt.Println()
 
-	if arguments.Bool("o", "open", false) {
-		exec.Command("rundll32", "url.dll,FileProtocolHandler", host).Start()
+	if options.Open {
+		exec.Command("rundll32", "url.dll,FileProtocolHandler", options.GetHost()).Start()
 	}
 
-	if cert != "" && key != "" {
-		// Redirect http to https
-		if arguments.Bool("r", "redirect", false) {
+	// Redirect http to https
+	if options.HasSSL() {
+		if options.Redirect {
 			go func() {
 				http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 					target := "https://" + r.Host + r.URL.RequestURI()
@@ -99,19 +90,13 @@ func main() {
 					http.Redirect(w, r, target, http.StatusTemporaryRedirect)
 				})
 
-				must(http.ListenAndServe(":80", nil))
+				log.MustPanic(http.ListenAndServe(":80", nil))
 			}()
 		}
 
-		must(r.RunTLS(fmt.Sprintf(":%d", port), cert, key))
+		log.MustPanic(r.RunTLS(fmt.Sprintf(":%d", options.GetPort()), options.Certificate, options.Key))
 	} else {
-		must(r.Run(fmt.Sprintf(":%d", port)))
-	}
-}
-
-func must(err error) {
-	if err != nil {
-		panic(err)
+		log.MustPanic(r.Run(fmt.Sprintf(":%d", options.GetPort())))
 	}
 }
 

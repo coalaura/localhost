@@ -1,0 +1,35 @@
+<script>
+	(() => {
+		const Path = "/_live_local";
+
+		let ws, reloading;
+
+		function reconnect() {
+			ws = new WebSocket(Path);
+
+			ws.addEventListener("close", (event) => {
+				if (reloading) return;
+
+				reconnect();
+			});
+
+			ws.addEventListener("message", (event) => {
+				reloading = true;
+
+				sessionStorage.setItem(Path, this.scrollTop);
+
+				window.location.reload();
+			});
+		}
+
+		reconnect();
+
+		const scrollTop = parseInt(sessionStorage.getItem(Path));
+
+		if (scrollTop) {
+			document.body.scrollTop = scrollTop;
+		}
+
+		sessionStorage.removeItem(Path);
+	})();
+</script>
