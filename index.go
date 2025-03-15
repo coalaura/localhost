@@ -11,7 +11,7 @@ func EnsureIndex(pwd string) gin.HandlerFunc {
 
 	if IsPHPServer() {
 		def = "index.php"
-	} else if !IsLaravelServer() {
+	} else {
 		def = "index.html"
 	}
 

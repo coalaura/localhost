@@ -32,12 +32,8 @@ func HasPHPSupport() bool {
 	return err == nil && php != ""
 }
 
-func IsLaravelServer() bool {
-	return php != nil && php.laravel
-}
-
 func IsPHPServer() bool {
-	return php != nil && !php.laravel
+	return php != nil
 }
 
 func NewPHPServer(pwd string) (*PHPServer, error) {
