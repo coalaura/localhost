@@ -2,7 +2,7 @@
 	(() => {
 		const Path = "/_live_local";
 
-		let ws, reloading;
+		let ws, reloading, current;
 
 		function reconnect() {
 			ws = new WebSocket(Path);
@@ -14,6 +14,16 @@
 			});
 
 			ws.addEventListener("message", (event) => {
+				const actual = event.data;
+
+				if (current === actual) return;
+
+				if (!current) {
+					current = actual;
+
+					return;
+				}
+
 				reloading = true;
 
 				sessionStorage.setItem(Path, this.scrollTop);

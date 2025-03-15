@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -26,7 +27,8 @@ var (
 		},
 	}
 
-	watcher *fsnotify.Watcher
+	changeId uint64
+	watcher  *fsnotify.Watcher
 
 	connectionId uint64
 	connections  sync.Map
@@ -80,6 +82,8 @@ func InitializeLive(pwd string) error {
 
 				log.Warningf("Watcher error: %v\n", err)
 			case <-debounce.C:
+				atomic.AddUint64(&changeId, 1)
+
 				BroadcastLiveReload()
 			}
 		}
@@ -109,6 +113,8 @@ func HandleLive(c *gin.Context) {
 		connection.Close()
 	}()
 
+	connection.WriteMessage(websocket.TextMessage, []byte(strconv.FormatUint(atomic.LoadUint64(&changeId), 16)))
+
 	for {
 		_, _, err := connection.ReadMessage()
 		if err != nil {
@@ -118,13 +124,15 @@ func HandleLive(c *gin.Context) {
 }
 
 func BroadcastLiveReload() {
+	version := []byte(strconv.FormatUint(atomic.LoadUint64(&changeId), 16))
+
 	connections.Range(func(key, value interface{}) bool {
 		client, ok := value.(*websocket.Conn)
 		if !ok {
 			return true
 		}
 
-		err := client.WriteMessage(websocket.TextMessage, []byte{0})
+		err := client.WriteMessage(websocket.TextMessage, version)
 		if err != nil {
 			log.Warningf("Failed to send reload message to client: %v\n", err)
 
