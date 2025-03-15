@@ -16,7 +16,8 @@ type Options struct {
 
 func NewOptions() Options {
 	return Options{
-		Directory: ".",
+		Directory:  ".",
+		LiveReload: true,
 	}
 }
 
