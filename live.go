@@ -34,6 +34,10 @@ var (
 	connections  sync.Map
 )
 
+func getChangeId() []byte {
+	return []byte(strconv.FormatUint(atomic.LoadUint64(&changeId), 16))
+}
+
 func InitializeLive(pwd string) error {
 	var err error
 
@@ -113,7 +117,9 @@ func HandleLive(c *gin.Context) {
 		connection.Close()
 	}()
 
-	connection.WriteMessage(websocket.TextMessage, []byte(strconv.FormatUint(atomic.LoadUint64(&changeId), 16)))
+	time.AfterFunc(500*time.Millisecond, func() {
+		connection.WriteMessage(websocket.TextMessage, getChangeId())
+	})
 
 	for {
 		_, _, err := connection.ReadMessage()
@@ -124,7 +130,7 @@ func HandleLive(c *gin.Context) {
 }
 
 func BroadcastLiveReload() {
-	version := []byte(strconv.FormatUint(atomic.LoadUint64(&changeId), 16))
+	version := getChangeId()
 
 	connections.Range(func(key, value interface{}) bool {
 		client, ok := value.(*websocket.Conn)

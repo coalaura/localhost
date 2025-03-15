@@ -2,13 +2,19 @@
 	(() => {
 		const Path = "/_live_local";
 
-		let ws, reloading, current;
+		let ws, connected, reloading, current;
 
 		function reconnect() {
+			if (connected) return;
+
+			connected = true;
+
 			ws = new WebSocket(Path);
 
 			ws.addEventListener("close", (event) => {
 				if (reloading) return;
+
+				connected = false;
 
 				reconnect();
 			});
@@ -41,5 +47,9 @@
 		}
 
 		sessionStorage.removeItem(Path);
+
+		addEventListener("beforeunload", () => {
+			reloading = true;
+		});
 	})();
 </script>
