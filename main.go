@@ -41,13 +41,13 @@ func main() {
 
 	r := gin.New()
 
+	// Handle php files
+	InitializePHP(r, dir)
+
 	r.Use(gin.Recovery())
 	r.Use(adapter.GinMiddleware(log))
 	r.Use(cors())
 	r.Use(EnsureIndex(dir))
-
-	// Handle php files
-	InitializePHP(r, dir)
 
 	// Handle static files
 	r.Use(HandleBasic(dir))
