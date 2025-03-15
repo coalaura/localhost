@@ -40,6 +40,11 @@ func InitializeLive(pwd string) error {
 		return err
 	}
 
+	err = watcher.Add(pwd)
+	if err != nil {
+		return err
+	}
+
 	err = filepath.Walk(pwd, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
