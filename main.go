@@ -20,17 +20,17 @@ var (
 )
 
 func main() {
-	arguments.Register("cert", 'c', &options.Certificate).WithHelp("Path to ssl certificate")
-	arguments.Register("directory", 'd', &options.Directory).WithHelp("Document root")
-	arguments.Register("index", 'i', &options.Index).WithHelp("Index file")
-	arguments.Register("key", 'k', &options.Key).WithHelp("Path to ssl key")
-	arguments.Register("live", 'l', &options.LiveReload).WithHelp("Automatically reload when files change (not with PHP)")
-	arguments.Register("open", 'o', &options.Open).WithHelp("Open in default browser once started")
-	arguments.Register("port", 'p', &options.Port).WithHelp("Web server port")
-	arguments.Register("redirect", 'r', &options.Redirect).WithHelp("Redirect http to https")
-	arguments.Register("verbose", 'v', &options.Verbose).WithHelp("Log php server output to php.log")
+	arguments.Register("cert", 'c', &options.Certificate).WithHelp("Path to the SSL certificate file for HTTPS (enables SSL)")
+	arguments.Register("directory", 'd', &options.Directory).WithHelp("Document root directory for serving files")
+	arguments.Register("index", 'i', &options.Index).WithHelp("Name of the index file to serve (e.g., index.html)")
+	arguments.Register("key", 'k', &options.Key).WithHelp("Path to the SSL key file for HTTPS (required with --cert)")
+	arguments.Register("live", 'l', &options.LiveReload).WithHelp("Enable live reload on file changes (refreshes browser)")
+	arguments.Register("open", 'o', &options.Open).WithHelp("Automatically open the web server URL in the default browser")
+	arguments.Register("port", 'p', &options.Port).WithHelp("Port number for the web server to listen on (default: 80)")
+	arguments.Register("redirect", 'r', &options.Redirect).WithHelp("Redirect HTTP traffic to HTTPS (requires --cert and --key)")
+	arguments.Register("verbose", 'v', &options.Verbose).WithHelp("Enable verbose logging of PHP server output to php.log")
 
-	arguments.RegisterHelp(true, "Show this help page.")
+	arguments.RegisterHelp(true, "Display this help message and exit")
 
 	arguments.MustParse()
 
