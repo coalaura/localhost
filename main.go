@@ -22,7 +22,6 @@ var (
 func main() {
 	arguments.Register("cert", 'c', &options.Certificate).WithHelp("Path to the SSL certificate file for HTTPS (enables SSL)")
 	arguments.Register("directory", 'd', &options.Directory).WithHelp("Document root directory for serving files")
-	arguments.Register("index", 'i', &options.Index).WithHelp("Name of the index file to serve (e.g., index.html)")
 	arguments.Register("key", 'k', &options.Key).WithHelp("Path to the SSL key file for HTTPS (required with --cert)")
 	arguments.Register("live", 'l', &options.LiveReload).WithHelp("Enable live reload on file changes (refreshes browser)")
 	arguments.Register("open", 'o', &options.Open).WithHelp("Automatically open the web server URL in the default browser")
@@ -42,7 +41,8 @@ func main() {
 	r := gin.New()
 
 	// Handle php files
-	InitializePHP(r, dir)
+	err = InitializePHP(r, dir)
+	log.MustPanic(err)
 
 	r.Use(gin.Recovery())
 	r.Use(adapter.GinMiddleware(log))

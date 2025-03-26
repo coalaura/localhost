@@ -44,7 +44,7 @@ func NewPHPServer(pwd string) (*PHPServer, error) {
 	if _, err := os.Stat(artisan); !os.IsNotExist(err) {
 		pwd = filepath.Join(pwd, "public")
 
-		if _, err := os.Stat(pwd); !os.IsNotExist(err) {
+		if _, err := os.Stat(pwd); os.IsNotExist(err) {
 			return nil, fmt.Errorf("failed to find laravel public directory: %s", pwd)
 		}
 	} else {
